@@ -28,6 +28,12 @@ File.open("/etc/apache2/sites-available/#{hostname}", 'w') do |f|
  f.puts "   ErrorLog  /var/log/apache2/error.#{hostname}.log"
  f.puts "   CustomLog /var/log/apache2/access.#{hostname}.log combined"
  f.puts
+ f.puts "   # uncomment for passenger if necessary
+ f.puts "   #<Directory /home/#{user}/public>"
+ f.puts "   #     AllowOverride all              # <-- relax Apache security settings"
+ f.puts "   #     Options -MultiViews            # <-- MultiViews must be turned off"
+ f.puts "   #</Directory> "
+ f.puts
  f.puts "</VirtualHost>"
 end
 
