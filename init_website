@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+
+puts "initialize a website"
+if ARGV.empty?
+ raise "usage: #$0 hostname user rootpath_from_home"
+end
+
+raise "#$0 must execute with root" if ENV['USER'] != 'root'
+
+hostname, user, rootpath = ARGV
+
+puts "creating user..."
+system "adduser #{user} --disabled-password --gecos ''"
+
+puts "copying ssh authorized keys..."
+system "mkdir /home/#{user}/.ssh "
+system "cp -a ~/.ssh/authorized_keys /home/#{user}/.ssh"
+system "chown -R #{user} /home/#{user}/.ssh/"
+system "chmod 700 /home/#{user}/.ssh"
+
+puts "creating apache configuration..."
+File.open("/etc/apache2/sites-available/#{hostname}", 'w') do |f|
+ f.puts "<VirtualHost *:80> "
+ f.puts "   ServerAdmin mickael.foucaux@gmail.com"
+ f.puts "   ServerName #{hostname}"
+ f.puts
+ f.puts "   DocumentRoot /home/#{user}/#{rootpath}"
+ f.puts "   ErrorLog  /var/log/apache2/error.#{hostname}.log"
+ f.puts "   CustomLog /var/log/apache2/access.#{hostname}.log combined"
+ f.puts
+ f.puts "</VirtualHost>"
+end
+
+puts "enable site in apache..."
+system "a2ensite #{hostname}"
+
+puts "reloading apache..."
+system "/etc/init.d/apache2 reload"
+
+puts "now just copy the website to #{rootpath} as #{user}."
+puts "do not forget to configure your #{hostname} from DNS"
+puts "and have fun"
