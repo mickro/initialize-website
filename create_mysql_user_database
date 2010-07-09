@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'highline/import'
+require 'active_record'
+
+if ARGV.size != 2
+  raise "usage: #$0 <user> <password>"
+end
+
+user, password = ARGV
+database = user
+
+root_password = ask("Mysql root password: ") { |q| q.echo = false }
+
+ActiveRecord::Base.logger = Logger.new(STDOUT)
+
+ActiveRecord::Base.establish_connection(
+  'adapter' => 'mysql',
+  'host' => 'localhost',
+  'database' => nil,
+  'username' => 'root',
+  'password' => root_password
+)
+
+charset = ENV['CHARSET'] || 'utf8'
+collation = ENV['COLLATION'] || 'utf8_general_ci'
+creation_options = {
+  :charset => charset,
+  :collation => collation,
+}
+
+grant_statement = "GRANT ALL PRIVILEGES ON
+  #{database}.* " \
+  "TO '#{user}'@'localhost' " \
+  "IDENTIFIED BY '#{password}' WITH GRANT OPTION;"
+
+
+ActiveRecord::Base.connection.create_database(database, creation_options)
+ActiveRecord::Base.connection.execute grant_statement
